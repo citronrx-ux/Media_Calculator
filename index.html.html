@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Tools Calculator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            box-sizing: border-box;
+        }
+        .app-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            margin-top: 2vh;
+        }
+        /* Tab Navigation Styles */
+        .tabs {
+            display: flex;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #868e96;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .tab-btn:hover {
+            color: #007bff;
+            background-color: #f1f3f5;
+        }
+        .tab-btn.active {
+            color: #007bff;
+            border-bottom: 3px solid #007bff;
+            background-color: #ffffff;
+        }
+        /* Content Area */
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Shared Calculator Styles */
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .input-group:last-of-type {
+            border-bottom: none;
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #495057;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        input[type="number"] {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.8rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        select {
+            padding: 0.8rem 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: #fff;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .unit-type-select {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .combo-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .combo-container span {
+            font-weight: bold;
+            color: #adb5bd;
+            font-size: 1.2rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+        .calc-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.2s;
+        }
+        .calc-btn:hover {
+            background-color: #0056b3;
+        }
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+        }
+        .result-item {
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+            border-top: 1px dashed #ced4da;
+            padding-top: 1rem;
+        }
+        .result-item span {
+            font-weight: 700;
+            color: #0056b3;
+            font-size: 1.2rem;
+            padding: 0 4px;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 0.8rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: none;
+            margin-top: 1rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'mediaTab')">🧪 Media Prep</button>
+        <button class="tab-btn" onclick="switchTab(event, 'dilutionTab')">💧 Reagent Dilution</button>
+    </div>
+
+    <div id="mediaTab" class="tab-content active">
+        <h2>Media Prep Calculator</h2>
+
+        <div class="input-group">
+            <label for="totalVolume">Total Media Volume (mL)</label>
+            <input type="number" id="totalVolume" placeholder="e.g. 100" min="0" step="any" inputmode="decimal">
+        </div>
+
+        <div class="input-group">
+            <label for="targetSerum">Target Serum Concentration (%)</label>
+            <input type="number" id="targetSerum" placeholder="e.g. 10" min="0" max="100" step="any" inputmode="decimal">
+        </div>
+
+        <div class="input-group">
+            <label for="baseSerum">Base Media Serum Concentration (%)</label>
+            <input type="number" id="baseSerum" value="0" min="0" max="100" step="any" inputmode="decimal">
+        </div>
+
+        <button class="calc-btn" onclick="calcMedia()">Calculate</button>
+
+        <div class="error" id="mediaErrorMsg"></div>
+
+        <div class="result-box" id="mediaResultBox" style="display: none;">
+            <div class="result-item">Required Pure Serum: <span id="serumResult">0</span> mL</div>
+            <div class="result-item">Required Base Media: <span id="baseResult">0</span> mL</div>
+        </div>
+    </div>
+
+    <div id="dilutionTab" class="tab-content">
+        <h2>Reagent Dilution</h2>
+
+        <div class="input-group">
+            <label for="c1">Stock Concentration (C₁)</label>
+            <div class="input-row">
+                <input type="number" id="c1" placeholder="Value" min="0" step="any">
+                <select id="c1_type" class="unit-type-select" onchange="updateUnitUI('c1')">
+                    <option value="mass_vol">Mass / Volume</option>
+                    <option value="molarity">Molarity (M)</option>
+                    <option value="other">Other (%, U)</option>
+                </select>
+
+                <div id="c1_mass_vol" class="combo-container">
+                    <select id="c1_mass">
+                        <option value="1">g</option>
+                        <option value="1e-3" selected>mg</option>
+                        <option value="1e-6">µg</option>
+                        <option value="1e-9">ng</option>
+                    </select>
+                    <span>/</span>
+                    <select id="c1_vol">
+                        <option value="1">L</option>
+                        <option value="1e-3" selected>mL</option>
+                        <option value="1e-6">µL</option>
+                    </select>
+                </div>
+
+                <div id="c1_molarity_div" class="combo-container" style="display: none;">
+                    <select id="c1_molarity">
+                        <option value="1">M</option>
+                        <option value="1e-3" selected>mM</option>
+                        <option value="1e-6">µM</option>
+                        <option value="1e-9">nM</option>
+                    </select>
+                </div>
+
+                <div id="c1_other_div" class="combo-container" style="display: none;">
+                    <select id="c1_other">
+                        <option value="1">%</option>
+                        <option value="1">U/mL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="c2">Target Concentration (C₂)</label>
+            <div class="input-row">
+                <input type="number" id="c2" placeholder="Value" min="0" step="any">
+                <select id="c2_type" class="unit-type-select" onchange="updateUnitUI('c2')">
+                    <option value="mass_vol">Mass / Volume</option>
+                    <option value="molarity">Molarity (M)</option>
+                    <option value="other">Other (%, U)</option>
+                </select>
+
+                <div id="c2_mass_vol" class="combo-container">
+                    <select id="c2_mass">
+                        <option value="1">g</option>
+                        <option value="1e-3">mg</option>
+                        <option value="1e-6" selected>µg</option>
+                        <option value="1e-9">ng</option>
+                    </select>
+                    <span>/</span>
+                    <select id="c2_vol">
+                        <option value="1">L</option>
+                        <option value="1e-3" selected>mL</option>
+                        <option value="1e-6">µL</option>
+                    </select>
+                </div>
+
+                <div id="c2_molarity_div" class="combo-container" style="display: none;">
+                    <select id="c2_molarity">
+                        <option value="1">M</option>
+                        <option value="1e-3">mM</option>
+                        <option value="1e-6" selected>µM</option>
+                        <option value="1e-9">nM</option>
+                    </select>
+                </div>
+
+                <div id="c2_other_div" class="combo-container" style="display: none;">
+                    <select id="c2_other">
+                        <option value="1">%</option>
+                        <option value="1">U/mL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="v2">Final Target Volume (V₂)</label>
+            <div class="input-row">
+                <input type="number" id="v2" placeholder="Value" min="0" step="any">
+                <select id="u_v2">
+                    <option value="1">L</option>
+                    <option value="1e-3" selected>mL</option>
+                    <option value="1e-6">µL</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="calc-btn" onclick="calcDilution()">Calculate</button>
+
+        <div class="error" id="dilutionErrorMsg"></div>
+
+        <div class="result-box" id="dilutionResultBox" style="display: none;">
+            <div class="result-item">1. Take <span id="resStock">0</span> of the <b>Stock Solution</b>.</div>
+            <div class="result-item">2. Add <span id="resSolvent">0</span> of <b>Solvent</b> (Diluent).</div>
+            <div class="result-item">➔ Final Volume: <span id="resTotal">0</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* =========================================
+       Tab Switching Logic
+       ========================================= */
+    function switchTab(event, tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab content and activate button
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    /* =========================================
+       Calculator 1: Media Prep Logic
+       ========================================= */
+    function calcMedia() {
+        const totalVolume = parseFloat(document.getElementById('totalVolume').value);
+        const targetSerum = parseFloat(document.getElementById('targetSerum').value);
+        const baseSerum = parseFloat(document.getElementById('baseSerum').value);
+        
+        const errorMsg = document.getElementById('mediaErrorMsg');
+        const resultBox = document.getElementById('mediaResultBox');
+        const serumResult = document.getElementById('serumResult');
+        const baseResult = document.getElementById('baseResult');
+
+        if (isNaN(totalVolume) || isNaN(targetSerum) || isNaN(baseSerum)) {
+            errorMsg.innerHTML = "⚠️ <b>Error:</b> Please enter valid numbers.";
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        if (baseSerum > targetSerum) {
+            errorMsg.innerHTML = "⚠️ <b>Error:</b> Target concentration must be ≥ base media concentration!";
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        } else {
+            errorMsg.style.display = 'none';
+        }
+
+        let serumVolume = 0;
+        let baseVolume = totalVolume;
+
+        if (targetSerum !== baseSerum) {
+            serumVolume = totalVolume * (targetSerum - baseSerum) / (100 - baseSerum);
+            baseVolume = totalVolume - serumVolume;
+        }
+
+        serumResult.textContent = serumVolume.toFixed(2);
+        baseResult.textContent = baseVolume.toFixed(2);
+        resultBox.style.display = 'block';
+    }
+
+    // Auto-calculate listeners for Media Prep
+    ['totalVolume', 'targetSerum', 'baseSerum'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const v = document.getElementById('totalVolume').value;
+            const t = document.getElementById('targetSerum').value;
+            if(v !== "" && t !== "") calcMedia();
+        });
+    });
+
+    /* =========================================
+       Calculator 2: Reagent Dilution Logic
+       ========================================= */
+    function updateUnitUI(prefix) {
+        const type = document.getElementById(`${prefix}_type`).value;
+        document.getElementById(`${prefix}_mass_vol`).style.display = (type === 'mass_vol') ? 'flex' : 'none';
+        document.getElementById(`${prefix}_molarity_div`).style.display = (type === 'molarity') ? 'flex' : 'none';
+        document.getElementById(`${prefix}_other_div`).style.display = (type === 'other') ? 'flex' : 'none';
+        autoCalcDilution();
+    }
+
+    function formatVolume(liters) {
+        if (liters === 0) return { val: '0', unit: 'mL' };
+        if (liters >= 1) return { val: liters.toFixed(4).replace(/\.?0+$/, ''), unit: 'L' };
+        if (liters >= 1e-3) return { val: (liters * 1e3).toFixed(4).replace(/\.?0+$/, ''), unit: 'mL' };
+        if (liters >= 1e-6) return { val: (liters * 1e6).toFixed(4).replace(/\.?0+$/, ''), unit: 'µL' };
+        return { val: (liters * 1e9).toFixed(4).replace(/\.?0+$/, ''), unit: 'nL' };
+    }
+
+    function getStandardizedConcentration(prefix) {
+        const val = parseFloat(document.getElementById(prefix).value);
+        if (isNaN(val)) return null;
+        const type = document.getElementById(`${prefix}_type`).value;
+        let factor = 1;
+        if (type === 'mass_vol') {
+            const massFactor = parseFloat(document.getElementById(`${prefix}_mass`).value);
+            const volFactor = parseFloat(document.getElementById(`${prefix}_vol`).value);
+            factor = massFactor / volFactor;
+        } else if (type === 'molarity') {
+            factor = parseFloat(document.getElementById(`${prefix}_molarity`).value);
+        } else {
+            factor = parseFloat(document.getElementById(`${prefix}_other`).value);
+        }
+        return { type: type, baseValue: val * factor };
+    }
+
+    function calcDilution() {
+        const errorMsg = document.getElementById('dilutionErrorMsg');
+        const resultBox = document.getElementById('dilutionResultBox');
+        const c1Data = getStandardizedConcentration('c1');
+        const c2Data = getStandardizedConcentration('c2');
+        const valV2 = parseFloat(document.getElementById('v2').value);
+        const factorV2 = parseFloat(document.getElementById('u_v2').value);
+
+        if (!c1Data || !c2Data || isNaN(valV2)) {
+            errorMsg.innerHTML = "⚠️ <b>Error:</b> Please enter valid numbers in all fields.";
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        if (c1Data.type !== c2Data.type) {
+            errorMsg.innerHTML = "⚠️ <b>Error:</b> Dimension Mismatch! C₁ and C₂ must be the same unit type.";
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        const baseC1 = c1Data.baseValue;
+        const baseC2 = c2Data.baseValue;
+        const baseV2 = valV2 * factorV2;
+
+        if (baseC1 < baseC2) {
+            errorMsg.innerHTML = "⚠️ <b>Error:</b> Stock concentration (C₁) cannot be lower than Target concentration (C₂).";
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+        const baseV1 = (baseC2 * baseV2) / baseC1;
+        const baseSolvent = baseV2 - baseV1;
+
+        const formatV1 = formatVolume(baseV1);
+        const formatSolvent = formatVolume(baseSolvent);
+        const formatV2 = formatVolume(baseV2);
+
+        document.getElementById('resStock').textContent = `${formatV1.val} ${formatV1.unit}`;
+        document.getElementById('resSolvent').textContent = `${formatSolvent.val} ${formatSolvent.unit}`;
+        document.getElementById('resTotal').textContent = `${formatV2.val} ${formatV2.unit}`;
+        resultBox.style.display = 'block';
+    }
+
+    function autoCalcDilution() {
+        const c1 = document.getElementById('c1').value;
+        const c2 = document.getElementById('c2').value;
+        const v2 = document.getElementById('v2').value;
+        if(c1 !== "" && c2 !== "" && v2 !== "") calcDilution();
+    }
+
+    // Bind event listeners for Reagent Dilution inputs
+    const dilutionInputs = document.getElementById('dilutionTab').querySelectorAll('input, select');
+    dilutionInputs.forEach(input => {
+        input.addEventListener('input', autoCalcDilution);
+        input.addEventListener('change', autoCalcDilution);
+    });
+
+</script>
+
+</body>
+</html>
